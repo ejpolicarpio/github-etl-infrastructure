@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}--config
+  namespace: github-etl
+  labels:
+    app: {{ .Chart.Name }}
+data:
+  APP_NAME: {{ .Values.env.APP_NAME | quote }}
+  LOG_LEVEL: {{ .Values.env.LOG_LEVEL | quote }}
+  DATABASE_HOST: {{ .Values.env.DATABASE_HOST | quote }}
+  DATABASE_PORT: {{ .Values.env.DATABASE_PORT | quote }}
+  DATABASE_NAME: {{ .Values.env.DATABASE_NAME | quote }}

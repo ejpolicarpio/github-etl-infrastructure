@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: github-etl
+  labels:
+    app: github-etl
+    environment: {{ .Values.env.APP_NAME | default "github-etl"}}
