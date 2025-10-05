@@ -1,0 +1,34 @@
+# Production environment overrides
+
+# Multiple replicas for high availability
+replicaCount: 3
+
+# ClusterIP or LoadBalancer for production
+service:
+  type: ClusterIP
+  port: 8000
+
+# Production-grade resources
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# Production logging (less verbose)
+env:
+  LOG_LEVEL: INFO
+
+# Larger database storage for production
+postgresql:
+  storage:
+    size: 10Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi

@@ -1,0 +1,35 @@
+# Development environment overrides
+
+# Single replica for dev (cost-effective, faster deployments)
+replicaCount: 1
+
+# Use NodePort so you can access via minikube
+service:
+  type: NodePort
+  port: 8000
+  nodePort: 30080  # Access at localhost:30080
+
+# Lower resources for local development
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Debug logging for development
+env:
+  LOG_LEVEL: DEBUG
+
+# Smaller database for dev
+postgresql:
+  storage:
+    size: 500Mi
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
