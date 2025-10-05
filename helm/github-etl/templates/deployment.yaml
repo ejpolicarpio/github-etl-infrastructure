@@ -1,1 +1,69 @@
-# TODO ADD DEPLOYMENT
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: github-etl
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.port }}
+          name: http
+        env:
+        # Environment variables from ConfigMap
+        - name: APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Chart.Name }}-config
+              key: APP_NAME
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Chart.Name }}-config
+              key: LOG_LEVEL
+        - name: DATABASE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Chart.Name }}-config
+              key: DATABASE_HOST
+        - name: DATABASE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Chart.Name }}-config
+              key: DATABASE_PORT
+        - name: DATABASE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Chart.Name }}-config
+              key: DATABASE_NAME
+        # Sensitive environment variables from Secret
+        - name: DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-secret
+              key: DATABASE_USER
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-secret
+              key: DATABASE_PASSWORD
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
