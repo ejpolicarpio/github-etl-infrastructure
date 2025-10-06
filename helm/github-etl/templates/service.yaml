@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: github-etl
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if eq .Values.service.type "NodePort" }}
+  {{- if .Values.service.nodePort }}
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+    nodePort: {{ .Values.service.nodePort }}
+  {{- end }}
+  {{- else }}
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+  {{- end }}
+  selector:
+    app: {{ .Chart.Name }}
+
+
+{{/*  The flow:*/}}
+{{/*  1. Request comes to Service: http://github-etl:8000*/}}
+{{/*  2. Service finds pods with label app: github-etl*/}}
+{{/*  3. Service load-balances across all healthy pods*/}}
+{{/*  4. Traffic reaches container port 8000*/}}
+
+{{/*  Real example:*/}}
+{{/*  - Dev: Access at http://localhost:30080 (NodePort)*/}}
+{{/*  - Prod: Other services access at http://github-etl:8000 (ClusterIP)*/}}
