@@ -1,0 +1,67 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Chart.Name }}-postgres
+  namespace: github-etl
+  labels:
+    app: {{ .Chart.Name }}-postgres
+spec:
+  serviceName: {{ .Chart.Name }}-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}-postgres
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: {{ .Values.postgresql.image }}
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Chart.Name }}-config
+              key: DATABASE_NAME
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-secret
+              key: DATABASE_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Chart.Name }}-secret
+              key: DATABASE_PASSWORD
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          limits:
+            cpu: {{ .Values.postgresql.resources.limits.cpu }}
+            memory: {{ .Values.postgresql.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.postgresql.resources.requests.cpu }}
+            memory: {{ .Values.postgresql.resources.requests.memory }}
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: {{ .Chart.Name }}-postgres-pvc
+{{- end }}
+
+
+{{/*  The flow:*/}}
+{{/*  1. StatefulSet creates pod: github-etl-postgres-0*/}}
+{{/*  2. Pod requests PVC: github-etl-postgres-pvc*/}}
+{{/*  3. PVC provides persistent storage*/}}
+{{/*  4. PostgreSQL container starts and initializes database*/}}
+{{/*  5. Data written to /var/lib/postgresql/data → saved to persistent storage*/}}
+{{/*  6. If pod restarts → same storage reattaches → data intact!*/}}

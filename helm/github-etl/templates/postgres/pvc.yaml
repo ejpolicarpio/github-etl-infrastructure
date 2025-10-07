@@ -1,0 +1,24 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Chart.Name }}-postgres-pvc
+  namespace: github-etl
+  labels:
+    app: {{ .Chart.Name }}-postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.postgresql.storage.class }}
+  resources:
+    requests:
+      storage: {{ .Values.postgresql.storage.size }}
+{{- end }}
+
+{{/*  The flow:*/}}
+{{/*  1. PVC requests storage: "I need 1Gi"*/}}
+{{/*  2. Kubernetes finds/creates a PersistentVolume (PV)*/}}
+{{/*  3. PVC binds to PV*/}}
+{{/*  4. Pod mounts the PVC*/}}
+{{/*  5. PostgreSQL writes data to it*/}}
+{{/*  6. Data persists even if pod restarts!*/}}
