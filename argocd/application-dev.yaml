@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: github-etl-dev
+  namespace: argocd
+spec:
+  project: default
+
+# Source: Your Git repository
+source:
+  repoURL: https://github.com/ejpolicarpio/github-etl-infrastructure
+  targetRevision: main
+  path: helm/github-etl
+  helm:
+    valueFiles:
+      - values.yaml
+      - values-dev.yaml
+
+# Destination: Where to deploy
+destination:
+  server: https://kubernetes.default.svc
+  namespace: github-etl
+
+# Sync policy: Automatic deployment
+syncPolicy:
+  automated:
+    prune: true      # Delete resources removed from Git
+    selfHeal: true   # Auto-fix manual changes
+  syncOptions:
+    - CreateNamespace=true
+
+
+#  1. metadata.name: github-etl-dev - The name of this ArgoCD app
+#  2. metadata.namespace: argocd - ArgoCD apps live in the argocd namespace
+#  3. source.repoURL: Your GitHub repo URL
+#  4. source.targetRevision: main - Which branch to watch
+#  5. source.path: helm/github-etl - Where your Helm chart lives
+#  6. source.helm.valueFiles: Load base values + dev overrides
+#  7. destination.server: https://kubernetes.default.svc - Deploy to the same cluster ArgoCD is running in
+#  8. destination.namespace: github-etl - Deploy to this namespace
+#  9. syncPolicy.automated.prune: true - If you delete something from Git, ArgoCD deletes it from Kubernetes
+#  10. syncPolicy.automated.selfHeal: true - If someone manually changes Kubernetes, ArgoCD reverts it back to Git
