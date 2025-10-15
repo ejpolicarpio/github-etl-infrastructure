@@ -7,27 +7,27 @@ spec:
   project: default
 
 # Source: Your Git repository
-source:
-  repoURL: https://github.com/ejpolicarpio/github-etl-infrastructure
-  targetRevision: main
-  path: helm/github-etl
-  helm:
-    valueFiles:
-      - values.yaml
-      - values-dev.yaml
+  source:
+    repoURL: https://github.com/ejpolicarpio/github-etl-infrastructure
+    targetRevision: main
+    path: helm/github-etl
+    helm:
+      valueFiles:
+        - values.yaml
+        - values-dev.yaml
 
 # Destination: Where to deploy
-destination:
-  server: https://kubernetes.default.svc
-  namespace: github-etl
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: github-etl
 
 # Sync policy: Automatic deployment
-syncPolicy:
-  automated:
-    prune: true      # Delete resources removed from Git
-    selfHeal: true   # Auto-fix manual changes
-  syncOptions:
-    - CreateNamespace=true
+  syncPolicy:
+    automated:
+      prune: true      # Delete resources removed from Git
+      selfHeal: true   # Auto-fix manual changes
+    syncOptions:
+      - CreateNamespace=true
 
 
 #  1. metadata.name: github-etl-dev - The name of this ArgoCD app
