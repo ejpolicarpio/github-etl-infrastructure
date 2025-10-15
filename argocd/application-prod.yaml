@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: github-etl-prod
+  namespace: argocd
+spec:
+project: default
+
+# Source: Your Git repository
+source:
+  repoURL: https://github.com/ejpolicarpio/github-etl-infrastructure
+  targetRevision: main
+  path: helm/github-etl
+  helm:
+    valueFiles:
+      - values.yaml
+      - values-prod.yaml
+
+# Destination: Where to deploy
+destination:
+  server: https://kubernetes.default.svc
+  namespace: github-etl-prod
+
+# Sync policy: Manual approval for production
+syncPolicy:
+  syncOptions:
+    - CreateNamespace=true
