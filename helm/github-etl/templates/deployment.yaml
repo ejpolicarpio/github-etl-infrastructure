@@ -34,28 +34,28 @@ spec:
             configMapKeyRef:
               name: {{ .Chart.Name }}-config
               key: LOG_LEVEL
-        - name: DATABASE_HOST
+        - name: database_host
           valueFrom:
             configMapKeyRef:
               name: {{ .Chart.Name }}-config
               key: DATABASE_HOST
-        - name: DATABASE_PORT
+        - name: database_port
           valueFrom:
             configMapKeyRef:
               name: {{ .Chart.Name }}-config
               key: DATABASE_PORT
-        - name: DATABASE_NAME
+        - name: database_name
           valueFrom:
             configMapKeyRef:
               name: {{ .Chart.Name }}-config
               key: DATABASE_NAME
         # Sensitive environment variables from Secret
-        - name: DATABASE_USER
+        - name: database_username
           valueFrom:
             secretKeyRef:
               name: {{ .Chart.Name }}-secret
               key: DATABASE_USER
-        - name: DATABASE_PASSWORD
+        - name: database_password
           valueFrom:
             secretKeyRef:
               name: {{ .Chart.Name }}-secret
