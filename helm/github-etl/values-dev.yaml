@@ -1,6 +1,6 @@
 # Development environment overrides
 image:
-  tag: latest
+  tag: main-3b56681
 
 # Single replica for dev (cost-effective, faster deployments)
 replicaCount: 1
