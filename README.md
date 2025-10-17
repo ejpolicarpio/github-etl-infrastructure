@@ -153,28 +153,148 @@ GitHub Actions workflow for:
 
 ## Quick Start
 
-### Local Development Setup
+### 🚀 First Time Setup
 
 1. **Start Minikube cluster:**
    ```bash
    ./scripts/setup-minikube.sh
    ```
+   This starts a local Kubernetes cluster with Docker driver (4 CPUs, 8GB RAM).
 
 2. **Install ArgoCD:**
    ```bash
    ./scripts/install-argocd.sh
    ```
+   Installs ArgoCD for GitOps automation.
 
-3. **Deploy the application:**
+3. **Deploy ArgoCD Application:**
    ```bash
-   ./scripts/deploy.sh dev
+   kubectl apply -f argocd/application-dev.yaml
+   ```
+   Creates the ArgoCD application that watches this repo.
+
+4. **Load Docker Image (Minikube workaround):**
+   ```bash
+   # Get the current image tag
+   TAG=$(grep "tag:" helm/github-etl/values-dev.yaml | awk '{print $2}')
+
+   # Pull and load into Minikube
+   docker pull ghcr.io/ejpolicarpio/github-etl:$TAG
+   minikube image load ghcr.io/ejpolicarpio/github-etl:$TAG
+   ```
+   Note: Minikube can't pull from GHCR directly, so we load images manually. See [DEPLOYMENT-GUIDE.md](./DEPLOYMENT-GUIDE.md) for details.
+
+5. **Wait for ArgoCD to sync (1-3 minutes):**
+   ```bash
+   kubectl get pods -n github-etl -w
+   ```
+   Wait until you see: `github-etl-xxx 1/1 Running`
+
+### 🔄 After Restarting Your Laptop
+
+When you restart your laptop, Minikube stops. Here's how to start everything again:
+
+1. **Start Minikube:**
+   ```bash
+   minikube start
    ```
 
-4. **Access the application:**
+2. **Verify cluster is running:**
    ```bash
-   kubectl port-forward -n github-etl svc/github-etl 8000:8000
+   kubectl get nodes
    ```
-   Open http://localhost:8000/docs
+
+3. **Check if pods are running:**
+   ```bash
+   kubectl get pods -n github-etl
+   kubectl get pods -n argocd
+   ```
+
+   If pods are running, you're good! If not, continue below.
+
+4. **If pods aren't running, reload the image:**
+   ```bash
+   TAG=$(grep "tag:" helm/github-etl/values-dev.yaml | awk '{print $2}')
+   minikube image load ghcr.io/ejpolicarpio/github-etl:$TAG
+   kubectl rollout restart deployment github-etl -n github-etl
+   ```
+
+### 🌐 Accessing the Application
+
+**Option 1: NodePort (Minikube IP)**
+```bash
+echo "http://$(minikube ip):30080/docs"
+```
+Open the URL in your browser to see FastAPI Swagger docs.
+
+**Option 2: Port Forward (localhost)**
+```bash
+kubectl port-forward -n github-etl svc/github-etl 8000:8000
+```
+Then open: http://localhost:8000/docs
+
+### 🎛️ Accessing ArgoCD Dashboard
+
+```bash
+# Start port-forward
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# Get admin password
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
+
+Then open: https://localhost:8080
+- Username: `admin`
+- Password: (from command above)
+
+### 📝 After CI/CD Deploys New Version
+
+When GitHub Actions builds a new image:
+
+1. **Get the new image tag:**
+   ```bash
+   TAG=$(curl -s https://raw.githubusercontent.com/ejpolicarpio/github-etl-infrastructure/main/helm/github-etl/values-dev.yaml | grep "tag:" | awk '{print $2}')
+   echo "New tag: $TAG"
+   ```
+
+2. **Pull and load the new image:**
+   ```bash
+   docker pull ghcr.io/ejpolicarpio/github-etl:$TAG
+   minikube image load ghcr.io/ejpolicarpio/github-etl:$TAG
+   ```
+
+3. **Restart deployment:**
+   ```bash
+   kubectl rollout restart deployment github-etl -n github-etl
+   ```
+
+4. **Watch deployment:**
+   ```bash
+   kubectl get pods -n github-etl -w
+   ```
+
+### 🛠️ Common Commands
+
+```bash
+# View application logs
+kubectl logs -f -n github-etl -l app=github-etl
+
+# View database logs
+kubectl logs -f github-etl-postgres-0 -n github-etl
+
+# Check pod status
+kubectl get pods -n github-etl
+
+# Restart application
+kubectl rollout restart deployment github-etl -n github-etl
+
+# Access PostgreSQL
+kubectl exec -it github-etl-postgres-0 -n github-etl -- psql -U postgres -d github_etl
+
+# Delete everything
+helm uninstall github-etl -n github-etl
+kubectl delete namespace github-etl
+```
 
 ### Production Deployment
 
