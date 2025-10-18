@@ -6,7 +6,7 @@ metadata:
 spec:
   # Exporter configuration
   exporter:
-    endpoint: http://observability-alloy.observability.svc.cluster.local:4317
+    endpoint: observability-alloy.observability.svc.cluster.local:4317
 
   # Propagators for trace context
   propagators:
