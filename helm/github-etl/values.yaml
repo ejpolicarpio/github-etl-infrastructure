@@ -4,6 +4,8 @@ image:
   repository: ghcr.io/ejpolicarpio/github-etl
   tag: latest
   pullPolicy: IfNotPresent
+  pullSecrets:
+    - name: ghcr-secret
 
 service:
   type: ClusterIP
