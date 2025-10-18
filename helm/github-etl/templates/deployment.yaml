@@ -18,7 +18,7 @@ spec:
         app: {{ .Chart.Name }}
     spec:
       imagePullSecrets:
-        - name: {{ .Values.image.pullSecrets[0].name }}
+    {{ toYaml .Values.image.pullSecrets | indent 8 }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
