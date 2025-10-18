@@ -1,0 +1,168 @@
+# Enable/disable components
+prometheus:
+  enabled: true
+
+loki:
+  enabled: true
+
+tempo:
+  enabled: true
+
+alloy:
+  enabled: true
+
+opentelemetry:
+  enabled: true
+
+# Prometheus + Grafana configuration
+kube-prometheus-stack:
+  # Grafana settings
+  grafana:
+    enabled: true
+    adminPassword: admin
+    service:
+      type: NodePort
+      nodePort: 30300
+    persistence:
+      enabled: false
+
+  # Prometheus settings
+  prometheus:
+    prometheusSpec:
+      retention: 7d
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+
+  # Alertmanager settings
+  alertmanager:
+    enabled: false
+
+# Loki configuration
+loki:
+  loki:
+    auth_enabled: false
+    commonConfig:
+      replication_factor: 1
+    storage:
+      type: 'filesystem'
+    schemaConfig:
+      configs:
+        - from: 2024-01-01
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: loki_index_
+            period: 24h
+
+  # Single binary mode
+  deploymentMode: SingleBinary
+
+  singleBinary:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+# Tempo configuration
+tempo:
+  tempo:
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/tempo/traces
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+  # Use single binary for simplicity
+  tempo:
+    structuredConfig:
+      server:
+        http_listen_port: 3100
+
+  persistence:
+    enabled: false
+
+# Alloy configuration (telemetry collector)
+alloy:
+  alloy:
+    configMap:
+      content: |
+        // Collect logs from Kubernetes pods
+        loki.source.kubernetes "pods" {
+          targets    = discovery.kubernetes.pods.targets
+          forward_to = [loki.write.local.receiver]
+        }
+
+        // Send logs to Loki
+        loki.write "local" {
+          endpoint {
+            url = "http://loki:3100/loki/api/v1/push"
+          }
+        }
+
+        // Receive OTLP traces and forward to Tempo
+        otelcol.receiver.otlp "default" {
+          grpc {
+            endpoint = "0.0.0.0:4317"
+          }
+          http {
+            endpoint = "0.0.0.0:4318"
+          }
+          output {
+            traces  = [otelcol.exporter.otlp.tempo.input]
+            metrics = [otelcol.exporter.prometheus.default.input]
+          }
+        }
+
+        // Export traces to Tempo
+        otelcol.exporter.otlp "tempo" {
+          client {
+            endpoint = "tempo:4317"
+            tls {
+              insecure = true
+            }
+          }
+        }
+
+        // Export metrics to Prometheus
+        otelcol.exporter.prometheus "default" {
+          forward_to = [prometheus.remote_write.local.receiver]
+        }
+
+        // Write metrics to Prometheus
+        prometheus.remote_write "local" {
+          endpoint {
+            url = "http://kube-prometheus-stack-prometheus:9090/api/v1/write"
+          }
+        }
+
+        // Kubernetes service discovery
+        discovery.kubernetes "pods" {
+          role = "pod"
+        }
+
+  controller:
+    type: deployment
+
+# OpenTelemetry Operator configuration
+opentelemetry-operator:
+  manager:
+    # Auto-instrumentation for Python (FastAPI)
+    collectorImage:
+      repository: "otel/opentelemetry-collector-k8s"

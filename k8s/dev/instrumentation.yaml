@@ -1,0 +1,30 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: python-instrumentation
+  namespace: github-etl
+spec:
+  # Exporter configuration
+  exporter:
+    endpoint: http://observability-alloy.observability.svc.cluster.local:4317
+
+  # Propagators for trace context
+  propagators:
+    - tracecontext
+    - baggage
+
+  # Python-specific configuration
+  python:
+    # OpenTelemetry Python auto-instrumentation image
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:latest
+
+    # Environment variables for the instrumentation
+    env:
+      - name: OTEL_EXPORTER_OTLP_PROTOCOL
+        value: grpc
+      - name: OTEL_METRICS_EXPORTER
+        value: otlp
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+      - name: OTEL_SERVICE_NAME
+        value: github-etl-api

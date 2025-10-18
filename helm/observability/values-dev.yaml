@@ -1,0 +1,60 @@
+# Development environment overrides
+
+# Prometheus + Grafana
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            resources:
+              requests:
+                storage: 5Gi
+      # Lower resources
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+  grafana:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+# Loki - smaller resources
+loki:
+  singleBinary:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+
+# Tempo - smaller resources
+tempo:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+# Alloy - smaller resources
+alloy:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
