@@ -1,5 +1,4 @@
-.PHONY: help setup-minikube install-argocd deploy-app install-observability access-grafana access-argocd status clean upgrade-observability full-setup create-ghcr-secret apply-instrumentation setup-observability
-
+.PHONY: help setup-minikube install-argocd deploy-app deploy-argocd install-observability access-grafana access-argocd status clean upgrade-observability full-setup create-ghcr-secret apply-instrumentation setup-observability
 # Default target - show help
 help:
 	@echo "Available commands:"
@@ -26,9 +25,19 @@ install-argocd:
 	@echo "🔧 Installing ArgoCD..."
 	./scripts/install-argocd.sh
 
-# Deploy application
+# Deploy application via ArgoCD
 deploy-app:
-	@echo "📦 Deploying application..."
+	@echo "📦 Deploying application via ArgoCD..."
+	kubectl apply -f argocd/application-dev.yaml
+	@echo "⏳ Waiting for ArgoCD to sync..."
+	kubectl wait --for=condition=Synced application/github-etl-dev -n argocd --timeout=5m || true
+	@echo "✅ ArgoCD Application created!"
+	@echo "   Check status: kubectl get application -n argocd"
+	@echo "   View in UI: make access-argocd"
+
+# Deploy via Helm directly (for local testing, bypasses ArgoCD)
+deploy-helm:
+	@echo "📦 Deploying application via Helm..."
 	./scripts/deploy.sh dev
 
 # Install observability stack
