@@ -49,18 +49,36 @@ install-observability:
 # Create GitHub Container Registry secret
 create-ghcr-secret:
 	@echo "🔐 Creating GitHub Container Registry secret..."
-	@echo "⚠️  You need to provide your GitHub Personal Access Token"
-	@read -p "Enter your GitHub username [ejpolicarpio]: " GITHUB_USER; \
-	GITHUB_USER=$${GITHUB_USER:-ejpolicarpio}; \
-	read -p "Enter your GitHub email: " GITHUB_EMAIL; \
-	read -sp "Enter your GitHub PAT (with read:packages scope): " GITHUB_PAT; \
-	echo ""; \
-	kubectl create secret docker-registry ghcr-secret \
-			--docker-server=ghcr.io \
-			--docker-username=$$GITHUB_USER \
-			--docker-password=$$GITHUB_PAT \
-			--docker-email=$$GITHUB_EMAIL \
-			-n github-etl || echo "Secret may already exist"
+	@if [ -f .env ]; then \
+			echo "📄 Loading credentials from .env file..."; \
+			export $$(cat .env | grep -v '^#' | xargs) && \
+			kubectl create namespace github-etl --dry-run=client -o yaml | kubectl apply -f - && \
+			kubectl create secret docker-registry ghcr-secret \
+					--docker-server=ghcr.io \
+					--docker-username=$${GITHUB_USERNAME} \
+					--docker-password=$${GITHUB_PAT} \
+					--docker-email=$${GITHUB_EMAIL} \
+					-n github-etl 2>/dev/null || echo "✓ Secret already exists"; \
+	else \
+			echo "⚠️  .env file not found. Please create one with:"; \
+			echo "   GITHUB_USERNAME=your-username"; \
+			echo "   GITHUB_EMAIL=your-email"; \
+			echo "   GITHUB_PAT=your-pat"; \
+			echo ""; \
+			echo "Or enter credentials manually:"; \
+			kubectl create namespace github-etl --dry-run=client -o yaml | kubectl apply -f -; \
+			read -p "Enter your GitHub username [ejpolicarpio]: " GITHUB_USER; \
+			GITHUB_USER=$${GITHUB_USER:-ejpolicarpio}; \
+			read -p "Enter your GitHub email: " GITHUB_EMAIL; \
+			read -sp "Enter your GitHub PAT (with read:packages scope): " GITHUB_PAT; \
+			echo ""; \
+			kubectl create secret docker-registry ghcr-secret \
+					--docker-server=ghcr.io \
+					--docker-username=$$GITHUB_USER \
+					--docker-password=$$GITHUB_PAT \
+					--docker-email=$$GITHUB_EMAIL \
+					-n github-etl || echo "Secret may already exist"; \
+	fi
 
 # Apply OpenTelemetry Instrumentation
 apply-instrumentation:
