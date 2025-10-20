@@ -1,6 +1,7 @@
 # Development environment overrides
 image:
-  tag: main-2bd50a5
+  tag: latest
+  pullPolicy: Always
 
 # Single replica for dev (cost-effective, faster deployments)
 replicaCount: 1
