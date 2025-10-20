@@ -71,7 +71,6 @@ apply-instrumentation:
 setup-observability: install-observability apply-instrumentation
 	@echo ""
 	@echo "✅ Complete observability setup finished!"
-	@echo "✅ Complete observability setup finished!"
 	@echo "   - Observability stack: Installed"
 	@echo "   - OpenTelemetry Instrumentation: Applied"
 	@echo ""
